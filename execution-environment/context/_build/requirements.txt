@@ -1,4 +1,0 @@
-openshift == 0.13.1
-kubernetes
-jmespath
-passlib
