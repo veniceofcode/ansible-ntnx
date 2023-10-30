@@ -5,11 +5,5 @@ collections:
   - name: community.general
   - name: community.okd
   - name: kubernetes.core
-  - name: nutanix.ncp # Disabled due to hardcoding pip modules
+  - name: nutanix.ncp
     version: 1.8.0
-
-#roles:
-#  - name: nutanix.ncp
-#    src: http://github.com/nutanix/nutanix.ansible
-#    version: main
-#    scm: git

@@ -1,3 +1,5 @@
 execution-environment/context/
 execution-environment/context/**
 credential-helper.sh
+.vscode/
+.vscode/**
