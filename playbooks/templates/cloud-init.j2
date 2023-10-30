@@ -1,0 +1,15 @@
+#cloud-config
+users:
+  - name: {{ vm_new_user }}
+    sudo: ["ALL=(ALL) NOPASSWD:ALL"]
+    groups: wheel,adm,systemd-journal
+    ssh_pwauth: True
+    ssh_authorized_keys:
+{% for key in vm_new_user_ssh_keys %}
+      - {{ key }}
+{% endfor %}
+
+chpasswd:
+  list: |
+    {{ vm_new_user }}:{{ vm_new_user_password }}
+  expire: False
