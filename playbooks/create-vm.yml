@@ -25,19 +25,19 @@
       - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC7NLoy12rvN+Z5e9UQtpPXywXPbaU3twvphPW0wC8G76hQWVjd+Er5Xo9qyrs2PmMe+JLGkEiWAudSnkZ1vJdmc5ewPr3PRKmuiFkhwe4fMGbUO7H6ITEwZX/0sNqvVjxKOXlnfkd1R/Xy1QHlJySKyu2DVTLxOWeFm+HMNTVoNdRhUmsE2HigTWuMBnqHhVYU8SDAcp0d7js4mnk5F3Srry4+3tKsQ+iqwX4jeI5BLroIltEE8giO9mE3cB8soBX97tWVQuaZYUXxpXMwHl/CXXNEcpORpJ3vjIBlBb9oj7TAB9I7LZEjvhqAlFWWP/vmPYXeWpwXKT2vAFHada9QZOAjB9aSjoHf49hDs+uFwQpO3Xb50zjLQkTnwTUAD1kAQWkXcYdIvxjBXugMJzgxZpQghTvAICvrg0ko7rE0/uTKwyY1PRcaWPUwnnjZ1oJr8NeDrvYRtl4wUl+rHt78/2nWWqaGPuHg5vB3avNUg58lI6CXbhOslufGkPzkjaB8PEqsjUyEiQdQG1tKw9zXuw2MbxMBEEGQ3XavLD/VQrbuH92OjTbSFNhc1jGKjftMVLAB1ymsqP7P1DrborT625DkPf+czOcmMDydZvoC+ComewAnebImr8fqZWZSMWzYuW6dLcEK6o0fAw/J8iOH+EUuCmeLHjiv2yUvxQ0+ew== kemo@endurance.kemo.labs
 
   module_defaults:
-    nutanix.ncp.ntnx_vms:
-      nutanix_host: "{{ lookup('ansible.builtin.env', 'NUTANIX_HOSTNAME') }}"
-      nutanix_port: "{{ lookup('ansible.builtin.env', 'NUTANIX_PORT') }}"
-      nutanix_username: "{{ lookup('ansible.builtin.env', 'NUTANIX_USERNAME') }}"
-      nutanix_password: "{{ lookup('ansible.builtin.env', 'NUTANIX_PASSWORD') }}"
-      validate_certs: "{{ (lookup('ansible.builtin.env', 'VALIDATE_CERTS') | default('false')) | bool }}"
+    #nutanix.ncp.ntnx_vms:
+    #  nutanix_host: "{{ lookup('ansible.builtin.env', 'NUTANIX_HOSTNAME') }}"
+    #  nutanix_port: "{{ lookup('ansible.builtin.env', 'NUTANIX_PORT') }}"
+    #  nutanix_username: "{{ lookup('ansible.builtin.env', 'NUTANIX_USERNAME') }}"
+    #  nutanix_password: "{{ lookup('ansible.builtin.env', 'NUTANIX_PASSWORD') }}"
+    #  validate_certs: "{{ (lookup('ansible.builtin.env', 'VALIDATE_CERTS') | default('false')) | bool }}"
 
-    nutanix.ncp.ntnx_vms_info:
-      nutanix_host: "{{ lookup('ansible.builtin.env', 'NUTANIX_HOSTNAME') }}"
-      nutanix_port: "{{ lookup('ansible.builtin.env', 'NUTANIX_PORT') }}"
-      nutanix_username: "{{ lookup('ansible.builtin.env', 'NUTANIX_USERNAME') }}"
-      nutanix_password: "{{ lookup('ansible.builtin.env', 'NUTANIX_PASSWORD') }}"
-      validate_certs: "{{ (lookup('ansible.builtin.env', 'VALIDATE_CERTS') | default('false')) | bool }}"
+    #nutanix.ncp.ntnx_vms_info:
+    #  nutanix_host: "{{ lookup('ansible.builtin.env', 'NUTANIX_HOSTNAME') }}"
+    #  nutanix_port: "{{ lookup('ansible.builtin.env', 'NUTANIX_PORT') }}"
+    #  nutanix_username: "{{ lookup('ansible.builtin.env', 'NUTANIX_USERNAME') }}"
+    #  nutanix_password: "{{ lookup('ansible.builtin.env', 'NUTANIX_PASSWORD') }}"
+    #  validate_certs: "{{ (lookup('ansible.builtin.env', 'VALIDATE_CERTS') | default('false')) | bool }}"
 
   tasks:
 
