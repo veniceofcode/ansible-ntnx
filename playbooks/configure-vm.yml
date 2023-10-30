@@ -1,0 +1,80 @@
+---
+- name: Setup a new inventory from the VM information
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars:
+    keepalived_role: master
+
+  tasks:
+    - name: Create new inventory from passed variables
+      ansible.builtin.add_host:
+        name: "{{ vm_name }}"
+        groups: loadbalancers
+        ansible_host: "{{ vm_ip }}"
+        ansible_user: "{{ vm_new_user }}"
+        ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
+        keepalived_role: "{{ keepalived_role }}"
+
+- name: Configure VM with base packages
+  hosts: loadbalancers
+  gather_facts: true
+  become: true
+
+  vars:
+    update_system: true
+    base_packages:
+      - kexec-tools
+      - bash-completion
+      - cockpit
+      - jq
+      - selinux-policy-devel
+      - nano
+      - wget
+      - openssl
+      - curl
+      - haproxy
+      - keepalived
+      - libkeepalive
+      - socat
+      - firewalld
+      - s-nail
+      - postfix
+
+  tasks:
+    - name: Install base system packages
+      when: update_system
+      ansible.builtin.dnf:
+        name: "*"
+        state: latest
+        update_cache: true
+    
+    - name: Install base packages
+      ansible.builtin.dnf:
+        name: "{{ base_packages }}"
+        state: latest
+
+    - name: Enable the Cockpit service
+      ansible.builtin.service:
+        name: cockpit.socket
+        state: started
+        enabled: true
+
+    - name: Enable the firewalld service
+      ansible.builtin.service:
+        name: firewalld
+        state: started
+        enabled: true
+
+    - name: Enable the needed ports
+      ansible.posix.firewalld:
+        service: "{{ item }}"
+        permanent: true
+        state: enabled
+        immediate: true
+      loop:
+        - ssh
+        - http
+        - https
+        - cockpit

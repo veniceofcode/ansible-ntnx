@@ -32,58 +32,75 @@
       nutanix_password: "{{ lookup('ansible.builtin.env', 'NUTANIX_PASSWORD') }}"
       validate_certs: "{{ (lookup('ansible.builtin.env', 'VALIDATE_CERTS') | default('false')) | bool }}"
 
+    nutanix.ncp.ntnx_vms_info:
+      nutanix_host: "{{ lookup('ansible.builtin.env', 'NUTANIX_HOSTNAME') }}"
+      nutanix_port: "{{ lookup('ansible.builtin.env', 'NUTANIX_PORT') }}"
+      nutanix_username: "{{ lookup('ansible.builtin.env', 'NUTANIX_USERNAME') }}"
+      nutanix_password: "{{ lookup('ansible.builtin.env', 'NUTANIX_PASSWORD') }}"
+      validate_certs: "{{ (lookup('ansible.builtin.env', 'VALIDATE_CERTS') | default('false')) | bool }}"
+
   tasks:
 
-    - name: Create a temporary file
-      ansible.builtin.tempfile:
-        state: directory
-      register: temp_file
+    - name: Check to see if the VM already exists
+      nutanix.ncp.ntnx_vms_info:
+        filter:
+          vm_name: "{{ vm_name }}"
+        kind: vm
+      register: vm_info
 
-    - name: Template the cloud-init file
-      ansible.builtin.template:
-        src: cloud-init.j2
-        dest: "{{ temp_file.path }}/cloud-init.cfg"
-        mode: 0600
+    - name: Create VM if it does not already exist
+      when: vm_info.response.metadata.length == 0
+      block:
+        - name: Create a temporary directory
+          ansible.builtin.tempfile:
+            state: directory
+          register: temp_file
 
-    - name: Create VM
-      nutanix.ncp.ntnx_vms:
-        state: present
-        name: "{{ vm_name }}"
-        desc: "{{ vm_description }}"
-        categories: "{{ categories }}"
-        cluster:
-          name: "{{ cluster_name }}"
-        networks:
-          - is_connected: true
-            subnet:
-              name: "{{ subnet_name }}"
-              # mention cluster only when there are multiple subnets with same name accross clusters
-              # and subnet name is set above
-              # cluster:
-              #   name: "{{ cluster_name }}"
-        disks:
-          - type: "DISK"
-            size_gb: "{{ vm_disk_size }}"
-            bus: "SATA"
-            clone_image:
-              name: "{{ image_name }}"
-        vcpus: "{{ vm_vcpus | default(1) }}"
-        cores_per_vcpu: "{{ vm_cores_per_vcpu | default(4) }}"
-        memory_gb: "{{ vm_memory_gb }}"
-        guest_customization:
-          type: "cloud_init"
-          script_path: "{{ temp_file.path }}/cloud-init.cfg"
-          is_overridable: true
-      register: vm_output
+        - name: Template the cloud-init file
+          ansible.builtin.template:
+            src: cloud-init.j2
+            dest: "{{ temp_file.path }}/cloud-init.cfg"
+            mode: 0600
 
-    - name: Output of vm created
-      ansible.builtin.debug:
-        msg: '{{ vm_output }}'
+        - name: Create the VM
+          nutanix.ncp.ntnx_vms:
+            state: present
+            name: "{{ vm_name }}"
+            desc: "{{ vm_description }}"
+            categories: "{{ categories }}"
+            cluster:
+              name: "{{ cluster_name }}"
+            networks:
+              - is_connected: true
+                subnet:
+                  name: "{{ subnet_name }}"
+                  # mention cluster only when there are multiple subnets with same name accross clusters
+                  # and subnet name is set above
+                  # cluster:
+                  #   name: "{{ cluster_name }}"
+            disks:
+              - type: "DISK"
+                size_gb: "{{ vm_disk_size }}"
+                bus: "SATA"
+                clone_image:
+                  name: "{{ image_name }}"
+            vcpus: "{{ vm_vcpus | default(1) }}"
+            cores_per_vcpu: "{{ vm_cores_per_vcpu | default(4) }}"
+            memory_gb: "{{ vm_memory_gb }}"
+            guest_customization:
+              type: "cloud_init"
+              script_path: "{{ temp_file.path }}/cloud-init.cfg"
+              is_overridable: true
+          register: vm_output
 
-    - name: Delete temporary directory
-      ansible.builtin.file:
-        path: "{{ temp_file.path }}"
-        state: absent
+        - name: Output of vm created
+          ansible.builtin.debug:
+            msg: '{{ vm_output }}'
+
+        - name: Delete temporary directory
+          ansible.builtin.file:
+            path: "{{ temp_file.path }}"
+            state: absent
 
     # - name: Power the VM on
     #   nutanix.ncp.ntnx_vms:

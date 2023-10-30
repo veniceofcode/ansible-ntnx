@@ -5,16 +5,9 @@
 
   vars:
     vm_name: "MyRHELVM"
-    vm_description: "A Red Hat Enterprise Linux VM"
-
     cluster_name: MyCluster
-    subnet_name: MyNetwork
 
-    image_name: rhel-9.2-x86_64-kvm.qcow2
-
-    categories:
-      AppType:
-        - "OCP_HAPROXY"
+    debug_output: false
 
   module_defaults:
     nutanix.ncp.ntnx_vms_info:
@@ -33,5 +26,29 @@
       register: vm_result
 
     - name: Output the VM information
+      when: debug_output
       ansible.builtin.debug:
         var: vm_result
+
+    - name: Loop through the list to make sure that the intended VM is in our target cluster
+      when: vm_item.spec.cluster_reference.name == cluster_name
+      ansible.builtin.set_fact:
+        target_vm: "{{ vm_item }}"
+      loop: "{{ vm_result.response.entities }}"
+      loop_control:
+        loop_var: vm_item
+
+    - name: Set the facts for the VM data we need for the next job
+      ansible.builtin.set_fact:
+        vm_ip:  "{{ target_vm.status.resources.nic_list[0].ip_endpoint_list[0].ip }}"
+        vm_uuid: "{{ target_vm.metadata.uuid }}"
+
+    - name: Output the facts found
+      ansible.builtin.debug:
+        msg: "VM IP: {{ vm_ip }} VM UUID: {{ vm_uuid }}"
+
+    - name: Set variable to pass to next Job
+      ansible.builtin.set_stats:
+        data:
+          vm_ip:  "{{ vm_ip }}"
+          vm_uuid: "{{ vm_uuid }}"
