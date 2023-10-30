@@ -46,6 +46,7 @@
         filter:
           vm_name: "{{ vm_name }}"
         kind: vm
+        length: 10
       register: vm_info
 
     - name: Create VM if it does not already exist
