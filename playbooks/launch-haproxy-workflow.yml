@@ -1,0 +1,135 @@
+---
+- name: Launch workflow jobs
+  hosts: localhost
+  gather_facts: false
+
+  vars:
+    # ====================================================================================================
+    # Required Inputs
+    nutanix_workflow_name: "Create VMs"
+    haproxy_workflow_name: "Configure HAProxy"
+
+    keepalived_shared_ip: "192.168.42.37"
+    haproxy_stats_admin_user: notadmin
+    haproxy_stats_admin_pass: "securePassword"
+
+    vm_base_name: "MyRHELVM"
+    vm_first_suffix: "-1"
+    vm_second_suffix: "-2"
+
+    cluster_name: MyCluster
+    subnet_name: MyNetwork
+
+    image_name: rhel-9.2-x86_64-kvm.qcow2
+
+    vm_new_user: notansible
+    vm_new_user_password: Passw0rd123!
+
+    vm_new_user_ssh_keys:
+      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC7NLoy12rvN+Z5e9UQtpPXywXPbaU3twvphPW0wC8G76hQWVjd+Er5Xo9qyrs2PmMe+JLGkEiWAudSnkZ1vJdmc5ewPr3PRKmuiFkhwe4fMGbUO7H6ITEwZX/0sNqvVjxKOXlnfkd1R/Xy1QHlJySKyu2DVTLxOWeFm+HMNTVoNdRhUmsE2HigTWuMBnqHhVYU8SDAcp0d7js4mnk5F3Srry4+3tKsQ+iqwX4jeI5BLroIltEE8giO9mE3cB8soBX97tWVQuaZYUXxpXMwHl/CXXNEcpORpJ3vjIBlBb9oj7TAB9I7LZEjvhqAlFWWP/vmPYXeWpwXKT2vAFHada9QZOAjB9aSjoHf49hDs+uFwQpO3Xb50zjLQkTnwTUAD1kAQWkXcYdIvxjBXugMJzgxZpQghTvAICvrg0ko7rE0/uTKwyY1PRcaWPUwnnjZ1oJr8NeDrvYRtl4wUl+rHt78/2nWWqaGPuHg5vB3avNUg58lI6CXbhOslufGkPzkjaB8PEqsjUyEiQdQG1tKw9zXuw2MbxMBEEGQ3XavLD/VQrbuH92OjTbSFNhc1jGKjftMVLAB1ymsqP7P1DrborT625DkPf+czOcmMDydZvoC+ComewAnebImr8fqZWZSMWzYuW6dLcEK6o0fAw/J8iOH+EUuCmeLHjiv2yUvxQ0+ew== kemo@endurance.kemo.labs
+
+    # ====================================================================================================
+    # VAULTED INPUTS
+    controller_hostname: "aap.example.com"
+    # basic auth
+    controller_username: "admin"
+    controller_password: "securePassword"
+    # or
+    controller_oauthtoken: "secureToken"
+    global_organization: "My Organization"
+
+    # ====================================================================================================
+    # Optional Inputs, defaults provided
+    vm_disk_size: 40
+    vm_memory_gb: 8
+
+    controller_inventories:
+      - name: "{{ inventory_name }}"
+        organization: "{{ global_organization }}"
+        description: "Inventory for {{ inventory_name }}"
+
+  tasks:
+  
+    - name: Include the infra.controller_configuration.inventories role
+      when: controller_inventories is defined
+      ansible.builtin.include_role:
+        name: infra.controller_configuration.inventories
+
+    - name: Launch a Workflow Job that kicks off the first VM Creation Process
+      awx.awx.workflow_launch:
+        workflow_template: "{{ nutanix_workflow_name }}"
+        validate_certs: false
+        controller_host: "{{ controller_hostname }}"
+        controller_username: "{{ controller_username | default(omit) }}"
+        controller_password: "{{ controller_password | default(omit) }}"
+        controller_oauthtoken: "{{ controller_oauthtoken | default(omit) }}"
+        organization: "{{ global_organization }}"
+        timeout: 600
+        extra_vars:
+          vm_name: "{{ vm_base_name }}{{ vm_first_suffix }}"
+          vm_disk_size: "{{ vm_disk_size | int }}"
+          vm_memory_gb: "{{ vm_memory_gb | int }}"
+          cluster_name: "{{ cluster_name }}"
+          subnet_name: "{{ subnet_name }}"
+          image_name: "{{ image_name }}"
+          vm_new_user: "{{ vm_new_user }}"
+          vm_new_user_password: "{{ vm_new_user_password }}"
+          vm_new_user_ssh_keys: "{{ vm_new_user_ssh_keys }}"
+        wait: true
+
+    - name: Launch a Workflow Job that kicks off the second VM Creation Process
+      awx.awx.workflow_launch:
+        workflow_template: "{{ nutanix_workflow_name }}"
+        validate_certs: false
+        controller_host: "{{ controller_hostname }}"
+        controller_username: "{{ controller_username | default(omit) }}"
+        controller_password: "{{ controller_password | default(omit) }}"
+        controller_oauthtoken: "{{ controller_oauthtoken | default(omit) }}"
+        organization: "{{ global_organization }}"
+        timeout: 600
+        extra_vars:
+          vm_name: "{{ vm_base_name }}{{ vm_second_suffix }}"
+          vm_disk_size: "{{ vm_disk_size | int }}"
+          vm_memory_gb: "{{ vm_memory_gb | int }}"
+          cluster_name: "{{ cluster_name }}"
+          subnet_name: "{{ subnet_name }}"
+          image_name: "{{ image_name }}"
+          vm_new_user: "{{ vm_new_user }}"
+          vm_new_user_password: "{{ vm_new_user_password }}"
+          vm_new_user_ssh_keys: "{{ vm_new_user_ssh_keys }}"
+        wait: true
+
+    - name: Get the information about the VMs and create the inventory
+      block:
+        - name: Get the information about the first VM
+          ansible.builtin.include_tasks: tasks/get-vm-info.yml
+          vars:
+            vm_name: "{{ vm_base_name }}{{ vm_first_suffix }}"
+            cluster_name: "{{ cluster_name }}"
+            keepalived_role: MASTER
+
+        - name: Get the information about the second VM
+          ansible.builtin.include_tasks: tasks/get-vm-info.yml
+          vars:
+            vm_name: "{{ vm_base_name }}{{ vm_second_suffix }}"
+            cluster_name: "{{ cluster_name }}"
+            keepalived_role: BACKUP
+
+    - name: Kick off the HAProxy Configuration workflow job
+      awx.awx.workflow_launch:
+        workflow_template: "{{ haproxy_workflow_name }}"
+        validate_certs: false
+        controller_host: "{{ controller_hostname }}"
+        controller_username: "{{ controller_username | default(omit) }}"
+        controller_password: "{{ controller_password | default(omit) }}"
+        controller_oauthtoken: "{{ controller_oauthtoken | default(omit) }}"
+        inventory: "{{ inventory_name }}"
+        organization: "{{ global_organization }}"
+        timeout: 600
+        extra_vars:
+          keepalived_shared_ip: "{{ keepalived_shared_ip }}"
+          primary_server_endpoint: "{{ primary_server_endpoint }}"
+          backup_server_endpoint: "{{ backup_server_endpoint }}"
+          haproxy_stats_admin_user: "{{ haproxy_stats_admin_user }}"
+          haproxy_stats_admin_pass: "{{ haproxy_stats_admin_pass }}"
+        wait: false

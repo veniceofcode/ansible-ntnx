@@ -1,0 +1,55 @@
+---
+- name: Get information about the target VM
+  nutanix.ncp.ntnx_vms_info:
+    filter:
+      vm_name: "{{ vm_name }}"
+    kind: vm
+  register: vm_result
+
+- name: Output the VM information
+  when: debug_output
+  ansible.builtin.debug:
+    var: vm_result
+
+- name: Loop through the list to make sure that the intended VM is in our target cluster
+  when: vm_item.spec.cluster_reference.name == cluster_name
+  ansible.builtin.set_fact:
+    target_vm: "{{ vm_item }}"
+  loop: "{{ vm_result.response.entities }}"
+  loop_control:
+    loop_var: vm_item
+
+- name: Create new inventory from passed variables
+  ansible.builtin.add_host:
+    name: "{{ vm_name }}"
+    groups: loadbalancers
+    ansible_host: "{{ target_vm.status.resources.nic_list[0].ip_endpoint_list[0].ip }}"
+    ansible_user: "{{ vm_new_user }}"
+    ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
+    keepalived_role: "{{ keepalived_role }}"
+
+- name: Set the primary_server_endpoint fact if this is a MASTER
+  when: keepalived_role == "MASTER"
+  ansible.builtin.set_fact:
+    primary_server_endpoint: "{{ target_vm.status.resources.nic_list[0].ip_endpoint_list[0].ip }}"
+
+- name: Set the backup_server_endpoint fact if this is a BACKUP
+  when: keepalived_role == "BACKUP"
+  ansible.builtin.set_fact:
+    backup_server_endpoint: "{{ target_vm.status.resources.nic_list[0].ip_endpoint_list[0].ip }}"
+
+- name: Define the controller_hosts variable
+  ansible.builtin.set_fact:    
+    controller_hosts:
+      - name: "{{ vm_name }}"
+        groups: loadbalancers
+        inventory: "{{ inventory_name }}"
+        variables:
+          ansible_host: "{{ target_vm.status.resources.nic_list[0].ip_endpoint_list[0].ip }}"
+          ansible_user: "{{ vm_new_user }}"
+          ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
+          keepalived_role: "{{ keepalived_role }}"
+
+- name: Include the infra.controller_configuration.hosts role
+  ansible.builtin.include_role:
+    name: infra.controller_configuration.hosts
