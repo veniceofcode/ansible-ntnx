@@ -31,6 +31,7 @@
     # ====================================================================================================
     # VAULTED INPUTS
     controller_hostname: "aap.example.com"
+    controller_validate_certs: false
     # basic auth
     controller_username: "admin"
     controller_password: "securePassword"
@@ -67,8 +68,9 @@
         timeout: 600
         extra_vars:
           vm_name: "{{ vm_base_name }}{{ vm_first_suffix }}"
-          vm_disk_size: "{{ vm_disk_size | int }}"
-          vm_memory_gb: "{{ vm_memory_gb | int }}"
+          vm_description: "OpenShift HAProxy VM {{ vm_base_name }}{{ vm_first_suffix }}"
+          vm_disk_size: "{{ vm_disk_size }}"
+          vm_memory_gb: "{{ vm_memory_gb }}"
           cluster_name: "{{ cluster_name }}"
           subnet_name: "{{ subnet_name }}"
           image_name: "{{ image_name }}"
@@ -89,8 +91,9 @@
         timeout: 600
         extra_vars:
           vm_name: "{{ vm_base_name }}{{ vm_second_suffix }}"
-          vm_disk_size: "{{ vm_disk_size | int }}"
-          vm_memory_gb: "{{ vm_memory_gb | int }}"
+          vm_description: "OpenShift HAProxy VM {{ vm_base_name }}{{ vm_first_suffix }}"
+          vm_disk_size: "{{ vm_disk_size }}"
+          vm_memory_gb: "{{ vm_memory_gb }}"
           cluster_name: "{{ cluster_name }}"
           subnet_name: "{{ subnet_name }}"
           image_name: "{{ image_name }}"
