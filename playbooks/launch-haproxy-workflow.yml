@@ -29,6 +29,11 @@
       - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC7NLoy12rvN+Z5e9UQtpPXywXPbaU3twvphPW0wC8G76hQWVjd+Er5Xo9qyrs2PmMe+JLGkEiWAudSnkZ1vJdmc5ewPr3PRKmuiFkhwe4fMGbUO7H6ITEwZX/0sNqvVjxKOXlnfkd1R/Xy1QHlJySKyu2DVTLxOWeFm+HMNTVoNdRhUmsE2HigTWuMBnqHhVYU8SDAcp0d7js4mnk5F3Srry4+3tKsQ+iqwX4jeI5BLroIltEE8giO9mE3cB8soBX97tWVQuaZYUXxpXMwHl/CXXNEcpORpJ3vjIBlBb9oj7TAB9I7LZEjvhqAlFWWP/vmPYXeWpwXKT2vAFHada9QZOAjB9aSjoHf49hDs+uFwQpO3Xb50zjLQkTnwTUAD1kAQWkXcYdIvxjBXugMJzgxZpQghTvAICvrg0ko7rE0/uTKwyY1PRcaWPUwnnjZ1oJr8NeDrvYRtl4wUl+rHt78/2nWWqaGPuHg5vB3avNUg58lI6CXbhOslufGkPzkjaB8PEqsjUyEiQdQG1tKw9zXuw2MbxMBEEGQ3XavLD/VQrbuH92OjTbSFNhc1jGKjftMVLAB1ymsqP7P1DrborT625DkPf+czOcmMDydZvoC+ComewAnebImr8fqZWZSMWzYuW6dLcEK6o0fAw/J8iOH+EUuCmeLHjiv2yUvxQ0+ew== kemo@endurance.kemo.labs
 
     # ====================================================================================================
+    # HAProxy Inputs
+    primary_server_endpoint: ""
+    backup_server_endpoint: ""
+
+    # ====================================================================================================
     # VAULTED INPUTS
     controller_hostname: "aap.example.com"
     controller_validate_certs: false
@@ -119,8 +124,8 @@
             keepalived_role: BACKUP
 
     - name: Kick off the HAProxy Configuration workflow job
-      awx.awx.workflow_launch:
-        workflow_template: "{{ haproxy_workflow_name }}"
+      awx.awx.job_template:
+        name: "{{ haproxy_workflow_name }}"
         validate_certs: false
         controller_host: "{{ controller_hostname }}"
         controller_username: "{{ controller_username | default(omit) }}"
@@ -135,4 +140,3 @@
           backup_server_endpoint: "{{ backup_server_endpoint }}"
           haproxy_stats_admin_user: "{{ haproxy_stats_admin_user }}"
           haproxy_stats_admin_pass: "{{ haproxy_stats_admin_pass }}"
-        wait: false
